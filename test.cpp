@@ -296,6 +296,7 @@ void completion_of_computing_event(int current_time, string next_event, vector<p
 		// go directly to the resource
 
 		// then change the correspond device's state
+		next_process = event_list.front().p_id;
 		change_device_state(instruction, to_string(next_process));
 		// add new event
 		// release_time = current_time + execution_time;
