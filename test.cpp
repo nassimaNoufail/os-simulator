@@ -382,8 +382,8 @@ int main(int argc, char const *argv[])
 	vector<pair<string, int> > event_process_id_instruction;
 	vector<pair<string, int> > next_queue_instruction;
 	
-	map<int, pair<string, int> > process_state_table;
-	vector <pair<string, string> > process_state_vector;
+	map<int, vector <pair<string, int> > > process_state_table;
+	vector <pair<string, int> > process_state_vector;
 
 	int ssd_count = 0;
 	int ssd_time = 0;
@@ -422,6 +422,27 @@ int main(int argc, char const *argv[])
 		// check correspond device state, if it is avail, pop first process to device
 		// change device state, update event lsit and process state
 		// if it is not avail, update process state
+		int pro_id;
+		int exe_time;
+		// if not more operations, process terminate
+		if (process.find(event_process_id).empty())
+		{
+			// process terminate
+			// print terminate time
+			exe_time = process_state_table[event_process_id].second();
+			cout << "Process " << event_process_id << " terminates at time "
+							   << exe_time << " ms" << endl;
+			cout << "Process " << event_process_id << " is TERMINATED" << endl;
+
+			// delete process and print other process state
+			process_state_table.erase(process_state_table.find(event_process_id));
+			for(auto & table : process_state_table)
+			{
+				cout << "Process " << table.first << " is"
+								   << table.second.second() << endl; 
+			}
+			continue;
+		}
 		event_process_id_instruction.clear();
 		event_process_id_instruction = process.find(event_process_id)->second;
 
@@ -445,7 +466,11 @@ int main(int argc, char const *argv[])
 		{
 			// if it is not new process arrival
 			// it should be core, ssd or input release operation
-			// current event time should be completion time 
+			// current event time should be resouce operation completion time 
+			// the correspond process state should be running if process in core
+			// or blocked if process in input/ssd
+			// 
+
 			// The correspond resource should be released, so don't need to check resource table
 			// if it's core release, change that core state
 			// if it's ssd or input release, change the device state
