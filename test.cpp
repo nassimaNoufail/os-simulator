@@ -1,5 +1,5 @@
 // c++ 11 standard
-// Zhenggang Li UHID:1543212
+
 
 #include <iostream>
 #include <vector>
@@ -510,21 +510,17 @@ int main(int argc, char const *argv[])
 				{
 					// impossible
 				}
-				// go directly to the resource
-				// change the resource state
-				// -- Process 0 requests a core at time 10 ms for 100 ms
-				
-				
-			
-				change_device_state(instruction, to_string(event_process_id));
-				// add new event
-				event_list.push_back(EventList(event_process_id, instruction, release_time));
-				// update process state
-				process_state_table[event_process_id] = "RUNNING";
-				// -- Process 0 will release a core at time 110 ms
 				
 			}
+			else
+			{
+				// if device is not avail
+				// update process state to ready
 
+				process_state_vector.clear();
+				process_state_vector.push_back(make_pair("READY", execution_time));
+				process_state_table[event_process_id] = process_state_vector;
+			}
 
 
 
