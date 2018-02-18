@@ -482,8 +482,29 @@ int main(int argc, char const *argv[])
 										<< current_event_time << " ms" << endl;
 
 			change_device_state(event_name, event_process_id);
+			if (!ready_queue.empty())
+			{
+				// arrival process already push in the ready queue
+				// pop front process to core
+				pro_id = ready_queue.front();
+				exe_time = process_state_table[pro_id].second();
+				release_time = current_time + exe_time;
+				ready_queue.pop();
+				cout << "-- Process " << event_process_id << " will release a " 
+		 		 		 << event_process_id_instruction.front().first << " at time " 
+		 		 		 << release_time << " ms" << endl;
+				// change core state
+				change_device_state("CORE", to_string(pro_id));
+				// update process state
+				process_state_vector.clear();
+				process_state_vector.push_back(make_pair("RUNNING", release_time));
+				process_state_table[event_process_id] = process_state_vector;
 
-			
+				// update event list
+				event_list.push_back(EventList(event_process_id, instruction, release_time));
+
+			}
+
 
 
 
