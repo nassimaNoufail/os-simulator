@@ -445,6 +445,7 @@ int main(int argc, char const *argv[])
 		{
 			// if it is not new process arrival
 			// it should be core, ssd or input release operation
+			// current event time should be completion time 
 			// The correspond resource should be released, so don't need to check resource table
 			// if it's core release, change that core state
 			// if it's ssd or input release, change the device state
@@ -522,7 +523,7 @@ int main(int argc, char const *argv[])
 				process_state_table[event_process_id] = process_state_vector;
 			}
 
-
+		}
 
 
 
