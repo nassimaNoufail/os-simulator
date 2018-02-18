@@ -381,12 +381,14 @@ int main(int argc, char const *argv[])
 	
 	vector<pair<string, int> > event_process_id_instruction;
 	vector<pair<string, int> > next_queue_instruction;
+	vector <pair<string, string> > temp;
 	
 	map<int, vector <pair<string, int> > > process_state_table;
 	vector <pair<string, int> > process_state_vector;
 
 	int ssd_count = 0;
 	int ssd_time = 0;
+	
 	int release_time;
 
 
@@ -429,9 +431,9 @@ int main(int argc, char const *argv[])
 		{
 			// process terminate
 			// print terminate time
-			exe_time = process_state_table[event_process_id].second();
+			execution_time = process_state_table[event_process_id].second();
 			cout << "Process " << event_process_id << " terminates at time "
-							   << exe_time << " ms" << endl;
+							   << execution_time << " ms" << endl;
 			cout << "Process " << event_process_id << " is TERMINATED" << endl;
 
 			// delete process and print other process state
@@ -441,16 +443,20 @@ int main(int argc, char const *argv[])
 				cout << "Process " << table.first << " is"
 								   << table.second.second() << endl; 
 			}
+			// delete current event
+			event_list.erase(event_list.begin(), event_list.begin()+1);
 			continue;
 		}
+
+		// if not empty
 		event_process_id_instruction.clear();
 		event_process_id_instruction = process.find(event_process_id)->second;
 
 		process.find(event_process_id)->second.erase(process.find(event_process_id)->second.begin(), 
 												process.find(event_process_id)->second.begin()+1);
 		// read next instruction
-		string instruction = event_process_id_instruction.front().first;
-		int execution_time = event_process_id_instruction.front().second;
+		instruction = event_process_id_instruction.front().first;
+		execution_time = event_process_id_instruction.front().second;
 		cout << instruction << " " << execution_time << endl;
 
 		// push in the queue
@@ -470,6 +476,33 @@ int main(int argc, char const *argv[])
 			// the correspond process state should be running if process in core
 			// or blocked if process in input/ssd
 			// 
+			//-- CORE completion event for process 1 at time 60 ms
+			cout << "-- " << event_name << " completion event for process"
+										<< event_process_id << " at time "
+										<< current_event_time << " ms" << endl;
+
+			change_device_state(event_name, event_process_id);
+
+			
+
+
+
+
+
+
+
+			cout << "Process " << event_process_id
+							   << " starts at time "
+							   << current_event_time
+							   << " ms" << endl;
+			check_device_state(instruction, temp);
+			device = temp.front().first;
+			device_state = temp.front().second;
+
+			cout << "-- Process " << event_process_id << " requests a "
+									  << instruction << " at time "
+									  << current_time << " for " 
+									  << execution_time << " ms" << endl;
 
 			// The correspond resource should be released, so don't need to check resource table
 			// if it's core release, change that core state
@@ -510,7 +543,7 @@ int main(int argc, char const *argv[])
 			{
 				// if device is available
 				// check if queue is empty
-				if (!ready_queue.is_empty())
+				if (!ready_queue.empty())
 				{
 					// arrival process already push in the ready queue
 					// pop front process to core
@@ -542,7 +575,13 @@ int main(int argc, char const *argv[])
 			{
 				// if device is not avail
 				// update process state to ready
-
+				// -- Process 2 must wait for a core
+				cout << "-- Process " << event_process_id << " must wait for a " 
+									  << instruction << endl;
+				// -- Ready queue now contains 1 process(es) waiting for a core
+				cout << "-- Ready queue now contains " << ready_queue.size() 
+													   << " process(es) waiting for a "
+													   << instruction << endl;
 				process_state_vector.clear();
 				process_state_vector.push_back(make_pair("READY", execution_time));
 				process_state_table[event_process_id] = process_state_vector;
