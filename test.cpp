@@ -205,20 +205,20 @@ void queue_is_empty(string event_name, vector<pair<string, string> > &next_instr
 	int p_id;
 	string instruction;
 
-	if (event_name == "CORE")
-	{
-		if (ready_queue.empty())
-		{
-			p_id = -1;
-		}
-		else
-		{
-			p_id = ready_queue.front();
-			instruction = "CORE";
-			ready_queue.pop();
-		}
-	}
-	else if (event_name == "SSD")
+	// if (event_name == "CORE")
+	// {
+	// 	if (ready_queue.empty())
+	// 	{
+	// 		p_id = -1;
+	// 	}
+	// 	else
+	// 	{
+	// 		p_id = ready_queue.front();
+	// 		instruction = "CORE";
+	// 		ready_queue.pop();
+	// 	}
+	// }
+	if (event_name == "SSD")
 	{
 		if (ssd_queue.empty())
 		{
@@ -245,12 +245,12 @@ void queue_is_empty(string event_name, vector<pair<string, string> > &next_instr
 		}
 	}
 
-	next_instruction.push_back(make_pair(instruction, p_id));
+	//next_instruction.push_back(make_pair(instruction, p_id));
 }
 
 string push_in_queue(string event_name, int p_id)
 {
-	stirng queue_info;
+	string queue_info;
 
 	if (event_name == "CORE")
 	{
@@ -270,55 +270,55 @@ string push_in_queue(string event_name, int p_id)
 	return queue_info;
 }
 
-void completion_of_computing_event(int current_time, string event_name, vector<pair<string, int> > &next_queue_instruction)
-{
-	queue_is_empty(event_name, next_queue_instruction);
+// void completion_of_computing_event(int current_time, string event_name, vector<pair<string, int> > &next_queue_instruction)
+// {
+// 	queue_is_empty(event_name, next_queue_instruction);
 			
-	event_process_id = next_queue_instruction.front().second;
-	// event_process_id = -1 means empty
-	// else event_process_id = queue.front which is the process id
+// 	event_process_id = next_queue_instruction.front().second;
+// 	// event_process_id = -1 means empty
+// 	// else event_process_id = queue.front which is the process id
 
-	change_device_state(event_name, to_string(event_process_id));
-	cout << "-- " << event_name << " completion event for process "
-									<< event_process_id 
-									<< " at time "
-									<< current_time << " ms" << endl;
-	if (event_process_id != -1)
-	{
-		// if the queue is not empty
-		// get front process from the queue, add it in event
-		// pop next process in the device, do it in the queue_is_empty function
-		// save the front in next_instucetion
-		// print process release what device
-		// CORE completion event for process 1 at time 60 ms
-		instruction = next_queue_instruction.front().first;
-		execution_time = process_state_table[event_process_id].front().second;
-		// then change the correspond device's state
-		change_device_state(instruction, to_string(event_process_id));
+// 	change_device_state(event_name, to_string(event_process_id));
+// 	cout << "-- " << event_name << " completion event for process "
+// 									<< event_process_id 
+// 									<< " at time "
+// 									<< current_time << " ms" << endl;
+// 	if (event_process_id != -1)
+// 	{
+// 		// if the queue is not empty
+// 		// get front process from the queue, add it in event
+// 		// pop next process in the device, do it in the queue_is_empty function
+// 		// save the front in next_instucetion
+// 		// print process release what device
+// 		// CORE completion event for process 1 at time 60 ms
+// 		instruction = next_queue_instruction.front().first;
+// 		execution_time = process_state_table[event_process_id].front().second;
+// 		// then change the correspond device's state
+// 		change_device_state(instruction, to_string(event_process_id));
 		
 
 		
-	}
-	else
-	{
-		// if the queue is empty
-		// go directly to the resource
+// 	}
+// 	else
+// 	{
+// 		// if the queue is empty
+// 		// go directly to the resource
 
-		// then change the correspond device's state
-		event_process_id = event_list.front().p_id;
-		change_device_state(instruction, to_string(event_process_id));
-		// add new event
-		// release_time = current_time + execution_time;
-		// event_list.push_back(EventList(event_process_id, instruction, release_time));
+// 		// then change the correspond device's state
+// 		event_process_id = event_list.front().p_id;
+// 		change_device_state(instruction, to_string(event_process_id));
+// 		// add new event
+// 		// release_time = current_time + execution_time;
+// 		// event_list.push_back(EventList(event_process_id, instruction, release_time));
 		
-		// put next instruction in the queue
-		//push_in_queue(event_name, event_process_id);
-	}
+// 		// put next instruction in the queue
+// 		//push_in_queue(event_name, event_process_id);
+// 	}
 
-	// add new event
-	release_time = current_time + execution_time;
-	event_list.push_back(EventList(event_process_id, instruction, release_time));
-}
+// 	// add new event
+// 	release_time = current_time + execution_time;
+// 	event_list.push_back(EventList(event_process_id, instruction, release_time));
+// }
 
 int main(int argc, char const *argv[])
 {
@@ -366,7 +366,7 @@ int main(int argc, char const *argv[])
 
     
 
-	int current_time = event_list.front().eventime;
+	int current_time;
 	
 
 	int current_event_time;
@@ -391,10 +391,19 @@ int main(int argc, char const *argv[])
 	
 	int release_time;
 
+	int count = 0;
+	cout << "*************************" << endl;
+	cout << "*******    start ********" << endl;
+	cout << "*************************" << endl;
 
 
 	while(event_list.size())
-	{
+	{	
+		count ++;
+		if (count == 5)
+		{
+			break;
+		}
 
 		cout << "sort event list" << endl;
 		sort(event_list.begin(), event_list.end(), is_early());
@@ -404,6 +413,8 @@ int main(int argc, char const *argv[])
 				 << event_list[i].event << " " 
 				 << event_list[i].eventime
 				 << endl;
+
+		current_time = event_list.front().eventime;
 
 		cout << "current time  = " << current_time << endl;
 
@@ -427,11 +438,11 @@ int main(int argc, char const *argv[])
 		int pro_id;
 		int exe_time;
 		// if not more operations, process terminate
-		if (process.find(event_process_id).empty())
+		if (process.find(event_process_id)->second.empty())
 		{
 			// process terminate
 			// print terminate time
-			execution_time = process_state_table[event_process_id].second();
+			execution_time = process_state_table[event_process_id].front().second;
 			cout << "Process " << event_process_id << " terminates at time "
 							   << execution_time << " ms" << endl;
 			cout << "Process " << event_process_id << " is TERMINATED" << endl;
@@ -441,7 +452,7 @@ int main(int argc, char const *argv[])
 			for(auto & table : process_state_table)
 			{
 				cout << "Process " << table.first << " is"
-								   << table.second.second() << endl; 
+								   << table.second.front().second << endl; 
 			}
 			// delete current event
 			event_list.erase(event_list.begin(), event_list.begin()+1);
@@ -460,7 +471,7 @@ int main(int argc, char const *argv[])
 		cout << instruction << " " << execution_time << endl;
 
 		// push in the queue
-		queue_info = push_in_queue(event_name, event_process_id)
+		queue_info = push_in_queue(instruction, event_process_id);
 		// update process state, excution time
 		// ready in the ready queue, blocked in the device queue
 		process_state_vector.clear();
@@ -477,53 +488,119 @@ int main(int argc, char const *argv[])
 			// or blocked if process in input/ssd
 			// 
 			//-- CORE completion event for process 1 at time 60 ms
-			cout << "-- " << event_name << " completion event for process"
+			cout << "-- " << instruction << " completion event for process"
 										<< event_process_id << " at time "
 										<< current_event_time << " ms" << endl;
 
-			change_device_state(event_name, event_process_id);
-			if (!ready_queue.empty())
+			change_device_state(instruction, to_string(event_process_id));
+			if (instruction == "INPUT")
 			{
-				// arrival process already push in the ready queue
-				// pop front process to core
-				pro_id = ready_queue.front();
-				exe_time = process_state_table[pro_id].second();
-				release_time = current_time + exe_time;
-				ready_queue.pop();
-				cout << "-- Process " << event_process_id << " will release a " 
+				if (!input_queue.empty())
+				{
+					pro_id = input_queue.front();
+					exe_time = process_state_table[pro_id].front().second;
+					release_time = current_time + exe_time;
+					input_queue.pop();
+					cout << "-- Process " << event_process_id << " will release a " 
 		 		 		 << event_process_id_instruction.front().first << " at time " 
 		 		 		 << release_time << " ms" << endl;
-				// change core state
-				change_device_state("CORE", to_string(pro_id));
-				// update process state
-				process_state_vector.clear();
-				process_state_vector.push_back(make_pair("RUNNING", release_time));
-				process_state_table[event_process_id] = process_state_vector;
+		 		 	change_device_state(instruction, to_string(pro_id));
+					// update process state
+					process_state_vector.clear();
+					process_state_vector.push_back(make_pair("BLOCKED", release_time));
+					process_state_table[event_process_id] = process_state_vector;
 
-				// update event list
-				event_list.push_back(EventList(event_process_id, instruction, release_time));
+					// update event list
+					event_list.push_back(EventList(event_process_id, instruction, release_time));
+				}
+			}
+			else if (instruction == "CORE")
+			{
+				if (!ready_queue.empty())
+				{
+					pro_id = ready_queue.front();
+					exe_time = process_state_table[pro_id].front().second;
+					release_time = current_time + exe_time;
+					ready_queue.pop();
+					cout << "-- Process " << event_process_id << " will release a " 
+		 		 		 << event_process_id_instruction.front().first << " at time " 
+		 		 		 << release_time << " ms" << endl;
+		 		 	change_device_state(instruction, to_string(pro_id));
+					// update process state
+					process_state_vector.clear();
+					process_state_vector.push_back(make_pair("RUNNING", release_time));
+					process_state_table[event_process_id] = process_state_vector;
 
+					// update event list
+					event_list.push_back(EventList(event_process_id, instruction, release_time));
+				}
+			}
+			else
+			{
+				// instruction == SSD
+				if (!ssd_queue.empty())
+				{
+					pro_id = ssd_queue.front();
+					exe_time = process_state_table[pro_id].front().second;
+					release_time = current_time + exe_time;
+					ssd_queue.pop();
+					cout << "-- Process " << event_process_id << " will release a " 
+		 		 		 << event_process_id_instruction.front().first << " at time " 
+		 		 		 << release_time << " ms" << endl;
+		 		 	change_device_state(instruction, to_string(pro_id));
+					// update process state
+					process_state_vector.clear();
+					process_state_vector.push_back(make_pair("BLOCKED", release_time));
+					process_state_table[event_process_id] = process_state_vector;
+
+					// update event list
+					event_list.push_back(EventList(event_process_id, instruction, release_time));
+				}
 			}
 
 
+			// if (!ready_queue.empty())
+			// {
+			// 	// process completion already push in the queue
+			// 	// pop front process to core
+			// 	pro_id = ready_queue.front();
+			// 	exe_time = process_state_table[pro_id].second();
+			// 	release_time = current_time + exe_time;
+			// 	ready_queue.pop();
+			// 	cout << "-- Process " << event_process_id << " will release a " 
+		 	// 		 		 << event_process_id_instruction.front().first << " at time " 
+		 	// 		 		 << release_time << " ms" << endl;
+			// 	// change core state
+			// 	change_device_state("CORE", to_string(pro_id));
+			// 	// update process state
+			// 	process_state_vector.clear();
+			// 	process_state_vector.push_back(make_pair("RUNNING", release_time));
+			// 	process_state_table[event_process_id] = process_state_vector;
+
+			// 	// update event list
+			// 	event_list.push_back(EventList(event_process_id, instruction, release_time));
+
+			// }
 
 
 
 
 
 
-			cout << "Process " << event_process_id
-							   << " starts at time "
-							   << current_event_time
-							   << " ms" << endl;
-			check_device_state(instruction, temp);
-			device = temp.front().first;
-			device_state = temp.front().second;
 
-			cout << "-- Process " << event_process_id << " requests a "
-									  << instruction << " at time "
-									  << current_time << " for " 
-									  << execution_time << " ms" << endl;
+
+			// cout << "Process " << event_process_id
+			// 				   << " starts at time "
+			// 				   << current_event_time
+			// 				   << " ms" << endl;
+			// check_device_state(instruction, temp);
+			// device = temp.front().first;
+			// device_state = temp.front().second;
+
+			// cout << "-- Process " << event_process_id << " requests a "
+			// 						  << instruction << " at time "
+			// 						  << current_time << " for " 
+			// 						  << execution_time << " ms" << endl;
 
 			// The correspond resource should be released, so don't need to check resource table
 			// if it's core release, change that core state
@@ -536,7 +613,7 @@ int main(int argc, char const *argv[])
 			// check queue state, if it's not empty, pop top process to the device
 			// read next instruction and add it in event list 
 			
-			completion_of_computing_event(current_time, event_name, next_queue_instruction);
+			//completion_of_computing_event(current_time, event_name, next_queue_instruction);
 		
 		}
 		else
@@ -569,7 +646,7 @@ int main(int argc, char const *argv[])
 					// arrival process already push in the ready queue
 					// pop front process to core
 					int pro_id = ready_queue.front();
-					int exe_time = process_state_table[pro_id].second();
+					int exe_time = process_state_table[pro_id].front().second;
 					release_time = current_time + exe_time;
 					ready_queue.pop();
 					cout << "-- Process " << event_process_id << " will release a " 
@@ -622,143 +699,144 @@ int main(int argc, char const *argv[])
 			// else if queue is not empty, push process in the queue
 			// then check core state, if core is avail, pop first process in the queue to core.
 			// Process 0 starts at time 10 ms
-			if (ready_queue.is_empty())
-			{
-				check_device_state(instruction, temp);
-				device = temp.front().first;
-				device_state = temp.front().second;
-				if (device_state == "available")
-				{
-					cout << "Process " << event_process_id << " starts at time " 
-			 							<< current_event_time << endl;
+			// if (ready_queue.is_empty())
+			// {
+			// 	check_device_state(instruction, temp);
+			// 	device = temp.front().first;
+			// 	device_state = temp.front().second;
+			// 	if (device_state == "available")
+			// 	{
+			// 		cout << "Process " << event_process_id << " starts at time " 
+			//  							<< current_event_time << endl;
 					
-					// change the core to blocked
-					change_device_state(instruction, to_string(event_process_id));
-					// add new process running event to event list
+			// 		// change the core to blocked
+			// 		change_device_state(instruction, to_string(event_process_id));
+			// 		// add new process running event to event list
 
-					release_time = current_time + execution_time;
-					event_list.push_back(EventList(event_process_id, instruction, release_time));
-					// update process state
-					process_state_table[event_process_id] = "RUNNING";
-					// -- Process 0 will release a core at time 110 ms
-					cout << "-- Process " << event_process_id << " will release a " 
-				 		 		 << event_process_id_instruction.front().first << " at time " 
-				 		 		 << release_time << " ms" << endl;
+			// 		release_time = current_time + execution_time;
+			// 		event_list.push_back(EventList(event_process_id, instruction, release_time));
+			// 		// update process state
+			// 		process_state_table[event_process_id] = "RUNNING";
+			// 		// -- Process 0 will release a core at time 110 ms
+			// 		cout << "-- Process " << event_process_id << " will release a " 
+			// 	 		 		 << event_process_id_instruction.front().first << " at time " 
+			// 	 		 		 << release_time << " ms" << endl;
 
-				}
-				else
-				{
-					cout << "-- Process " << event_process_id << " requests a "
-									  << instruction << " at time "
-									  << current_time << " for " 
-									  << execution_time << " ms" << endl;
-					// push new process in the ready queue
-					push_in_queue(instruction, event_process_id)
-					// save process state ready
-					// process_state_table[event_process_id] = "READY";
+			// 	}
+			// 	else
+			// 	{
+			// 		cout << "-- Process " << event_process_id << " requests a "
+			// 						  << instruction << " at time "
+			// 						  << current_time << " for " 
+			// 						  << execution_time << " ms" << endl;
+			// 		// push new process in the ready queue
+			// 		push_in_queue(instruction, event_process_id)
+			// 		// save process state ready
+			// 		// process_state_table[event_process_id] = "READY";
 
-					cout << "-- Ready queue now contains " << ready_queue.size()
-														   << " process(es)"
-														   << " waiting for a "
-														   << event_name << endl;
-					temp.clear();
-					temp.push_back(make_pair("READY", execution_time));
-					process_state_table[event_process_id] = temp;
-				}
+			// 		cout << "-- Ready queue now contains " << ready_queue.size()
+			// 											   << " process(es)"
+			// 											   << " waiting for a "
+			// 											   << event_name << endl;
+			// 		temp.clear();
+			// 		temp.push_back(make_pair("READY", execution_time));
+			// 		process_state_table[event_process_id] = temp;
+			// 	}
 
-			}
-			cout << "Process " << event_process_id
-							   << " starts at time "
-							   << current_event_time
-							   << " ms" << endl;
-			check_device_state(instruction, temp);
-			device = temp.front().first;
-			device_state = temp.front().second;
-			release_time = current_time + execution_time;
-			queue_is_empty(event_name, event_process_id_instruction);
+			// }
+			// cout << "Process " << event_process_id
+			// 				   << " starts at time "
+			// 				   << current_event_time
+			// 				   << " ms" << endl;
+			// check_device_state(instruction, temp);
+			// device = temp.front().first;
+			// device_state = temp.front().second;
+			// release_time = current_time + execution_time;
+			// queue_is_empty(event_name, event_process_id_instruction);
 
-			if (device_state == "available" && is_empty)
-			{
-				// if device is available
-				// check if queue is empty
+			// if (device_state == "available" && is_empty)
+			// {
+			// 	// if device is available
+			// 	// check if queue is empty
 
-				// go directly to the resource
-				// change the resource state
-				// -- Process 0 requests a core at time 10 ms for 100 ms
-				cout << "-- Process " << event_process_id << " requests a "
-									  << instruction << " at time "
-									  << current_time << " for " 
-									  << execution_time << " ms" << endl;
+			// 	// go directly to the resource
+			// 	// change the resource state
+			// 	// -- Process 0 requests a core at time 10 ms for 100 ms
+			// 	cout << "-- Process " << event_process_id << " requests a "
+			// 						  << instruction << " at time "
+			// 						  << current_time << " for " 
+			// 						  << execution_time << " ms" << endl;
 				
 			
-				change_device_state(instruction, to_string(event_process_id));
-				// add new event
-				event_list.push_back(EventList(event_process_id, instruction, release_time));
-				// update process state
-				process_state_table[event_process_id] = "RUNNING";
-				// -- Process 0 will release a core at time 110 ms
-				cout << "-- Process " << event_process_id << " will release a " 
-			 		 		 << event_process_id_instruction.front().first << " at time " 
-			 		 		 << release_time << " ms" << endl;
-			}
-			else
-			{
-				// if device is available but queue is not empty
-				if (!is_empty)
-				{
-					// pop top process to the device, already did in is_empty function
-					cout << "-- Process " << event_process_id << " requests a "
-									  << instruction << " at time "
-									  << current_time << " for " 
-									  << execution_time << " ms" << endl;
+			// 	change_device_state(instruction, to_string(event_process_id));
+			// 	// add new event
+			// 	event_list.push_back(EventList(event_process_id, instruction, release_time));
+			// 	// update process state
+			// 	process_state_table[event_process_id] = "RUNNING";
+			// 	// -- Process 0 will release a core at time 110 ms
+			// 	cout << "-- Process " << event_process_id << " will release a " 
+			//  		 		 << event_process_id_instruction.front().first << " at time " 
+			//  		 		 << release_time << " ms" << endl;
+			// }
+			// else
+			// {
+			// 	// if device is available but queue is not empty
+			// 	if (!is_empty)
+			// 	{
+			// 		// pop top process to the device, already did in is_empty function
+			// 		cout << "-- Process " << event_process_id << " requests a "
+			// 						  << instruction << " at time "
+			// 						  << current_time << " for " 
+			// 						  << execution_time << " ms" << endl;
 				
-					// change the device state
-					change_device_state(instruction, to_string(event_process_id))
-					// add new event
-					event_list.push_back(EventList(event_process_id, instruction, release_time));
-				}
-				else
-				{
+			// 		// change the device state
+			// 		change_device_state(instruction, to_string(event_process_id))
+			// 		// add new event
+			// 		event_list.push_back(EventList(event_process_id, instruction, release_time));
+			// 	}
+			// 	else
+			// 	{
 
-				}
-				// if device is not available
-				// put this event in the correspond queue
-				push_in_queue(event_name, event_process_id);
-				// -- Process 2 requests a core at time 50 ms for 40 ms
-				// -- Process 2 must wait for a core
-				// -- Ready queue now contains 1 process(es) waiting for a core
+			// 	}
+			// 	// if device is not available
+			// 	// put this event in the correspond queue
+			// 	push_in_queue(event_name, event_process_id);
+			// 	// -- Process 2 requests a core at time 50 ms for 40 ms
+			// 	// -- Process 2 must wait for a core
+			// 	// -- Ready queue now contains 1 process(es) waiting for a core
 
-				cout << "-- Process " << event_process_id << " requests a "
-									  << event_name << " at time "
-									  << current_event_time << " ms for "
-									  << execution_time << " ms" << endl;
-				cout << "-- Process " << event_process_id << " must wait for a "
-													  << event_name << endl;
+			// 	cout << "-- Process " << event_process_id << " requests a "
+			// 						  << event_name << " at time "
+			// 						  << current_event_time << " ms for "
+			// 						  << execution_time << " ms" << endl;
+			// 	cout << "-- Process " << event_process_id << " must wait for a "
+			// 										  << event_name << endl;
 
-				// update process state
-				if (event_name == "CORE")
-				{
-					cout << "-- Ready queue now contains " << ready_queue.size()
-														   << " process(es)"
-														   << " waiting for a "
-														   << event_name << endl;
-					temp.clear();
-					temp.push_back(make_pair("READY", execution_time));
-					process_state_table[event_process_id] = temp;
-				}
-				else
-				{
-					temp.clear();
-					temp.push_back(make_pair("BLOCKED", execution_time));
-					process_state_table[event_process_id] = temp;
-				}
+			// 	// update process state
+			// 	if (event_name == "CORE")
+			// 	{
+			// 		cout << "-- Ready queue now contains " << ready_queue.size()
+			// 											   << " process(es)"
+			// 											   << " waiting for a "
+			// 											   << event_name << endl;
+			// 		temp.clear();
+			// 		temp.push_back(make_pair("READY", execution_time));
+			// 		process_state_table[event_process_id] = temp;
+			// 	}
+			// 	else
+			// 	{
+			// 		temp.clear();
+			// 		temp.push_back(make_pair("BLOCKED", execution_time));
+			// 		process_state_table[event_process_id] = temp;
+			// 	}
 
-				//cout << "Process " << event_process_id << " is ready" << endl;
-			}
+			// 	//cout << "Process " << event_process_id << " is ready" << endl;
+			// }
 			
-		}
-
-		break;
+		event_list.erase(event_list.begin(), event_list.begin()+1);
+		cout << "---------------------------" << endl;
+		cout << "---------------------------" << endl;
+		//break;
 	}
 
 
