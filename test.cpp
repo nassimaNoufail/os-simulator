@@ -81,6 +81,7 @@ void split_process_and_save(map< int, vector<pair<string, int> > > &process, vec
 				if(flag != 0)
 				{
 					process[pNum] = operation;
+					operation.clear();
 					pNum++;
 				}
 
@@ -105,6 +106,7 @@ void split_process_and_save(map< int, vector<pair<string, int> > > &process, vec
     	//cout << it->first << " " << it->second << endl;
 	}
 	process[pNum] = operation;
+	operation.clear();
 
 }
 
@@ -359,8 +361,9 @@ int main(int argc, char const *argv[])
 	// for (auto & element : process)
 	// {
 	// 	cout << element.first << "th iteration" << endl;
-	// 	for(auto& ele: element.second)
-	// 		cout << ele.first << " " << ele.second << " " << endl;
+	// 	cout << "size of : " << element.second.size() << endl;
+	// 	// for(auto& ele: element.second)
+	// 	// 	cout << ele.first << " " << ele.second << " " << endl;
 	// }
 
 	// read core amount
@@ -460,6 +463,11 @@ int main(int argc, char const *argv[])
 		// if not more operations, process terminate
 		if (process.find(event_process_id)->second.empty())
 		{
+			// if (current_time == 15615)
+			// {
+			// 	cout << "15615 process 2 empty" << endl;
+			// }
+				
 			// process terminate
 			// print terminate time
 			execution_time = process_state_table[event_process_id].front().second;
@@ -470,6 +478,8 @@ int main(int argc, char const *argv[])
 
 			// delete process and print other process state
 			process_state_table.erase(process_state_table.find(event_process_id));
+
+			cout << endl;
 			for(auto & table : process_state_table)
 			{
 				cout << "Process " << table.first << " is "
@@ -481,12 +491,29 @@ int main(int argc, char const *argv[])
 		}
 		else
 		{
+			// if (current_time == 15615)
+			// {
+			// 	cout << "15615 process 2 not empty" << endl;
+			// 	for (auto & element : process)
+			// 	{
+			// 		//cout << element.first << "th iteration" << endl;
+			// 		if (element.first == 2)
+			// 		{
+			// 			//cout << "size of 2 : " << element.second.size() << endl;
+			// 			for(auto& ele: element.second)
+			// 				cout << ele.first << " " << ele.second << " " << endl;
+			// 		}
+
+			// 	}
+			// }
 			// if not empty
 			event_process_id_instruction.clear();
 			event_process_id_instruction = process.find(event_process_id)->second;
 
+			//cout << "size of 2 : " << process[2].size() << endl;
 			process.find(event_process_id)->second.erase(process.find(event_process_id)->second.begin(), 
 													process.find(event_process_id)->second.begin()+1);
+			//cout << "size of 2 : " << process.find(2)->second.size() << endl;
 			// read next instruction
 			instruction = event_process_id_instruction.front().first;
 			execution_time = event_process_id_instruction.front().second;
@@ -559,29 +586,25 @@ int main(int argc, char const *argv[])
 			}
 			else if (event_name == "CORE")
 			{
-				if (current_time == 15615)
-				{
-					cout << "15615 ms : " << endl;
-					for(auto & res : resource_state_table)
-					{
-						cout << res.first << " "; 
-						for(auto& r : res.second)
-					 		cout << r.first << " " << r.second << " " << endl;
-					}
+				// if (current_time == 15615)
+				// {
+				// 	cout << "15615 ms : " << endl;
+				// 	for(auto & res : resource_state_table)
+				// 	{
+				// 		cout << res.first << " "; 
+				// 		for(auto& r : res.second)
+				// 	 		cout << r.first << " " << r.second << " " << endl;
+				// 	}
 
-					// for(auto & table : process_state_table)
-					// {
-					// 	if (event_process_id == table.first)
-					// 	{
-					// 		continue;
-					// 	}
-					// 	cout << "Process " << table.first << " is " 
-					// 					   << table.second.front().first
-					// 					   << " until "
-					// 					   << table.second.front().second << endl; 
-					// }
+				// 	for(auto & table : process_state_table)
+				// 	{
+				// 		cout << "Process " << table.first << " is " 
+				// 						   << table.second.front().first
+				// 						   << " until "
+				// 						   << table.second.front().second << endl; 
+				// 	}
 
-				}
+				// }
 				
 				if (!ready_queue.empty())
 				{
@@ -590,7 +613,7 @@ int main(int argc, char const *argv[])
 					release_time = current_time + exe_time;
 					ready_queue.pop();
 
-					cout << pro_id << " " << "2 core id = " << core_id << endl;
+					//cout << pro_id << " " << "2 core id = " << core_id << endl;
 
 
 					cout << "-- Process " << pro_id << " will release a " 
@@ -606,10 +629,10 @@ int main(int argc, char const *argv[])
 					// update event list
 					event_list.push_back(EventList(pro_id, event_name, release_time));
 				}
-				else
-				{
-					cout << "ready queue is empty" << endl;
-				}
+				// else
+				// {
+				// 	cout << "ready queue is empty" << endl;
+				// }
 
 				//cout << "hwewe" << endl;
 			}
@@ -867,6 +890,7 @@ int main(int argc, char const *argv[])
 			// new process arrival
 			// check core state, if core is avail, pop first process in the queue to core
 			// update event list and process state running
+			cout << endl;
 			cout << "Process " << event_process_id
 							   << " starts at time "
 							   << current_event_time
@@ -931,6 +955,7 @@ int main(int argc, char const *argv[])
 				process_state_table[event_process_id] = process_state_vector;
 			}
 
+			cout << endl;
 			for(auto & table : process_state_table)
 			{
 				if (event_process_id == table.first)
