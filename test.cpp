@@ -114,17 +114,17 @@ void initial_resource_table(const int cores)
 	vector<pair<string, int> > resource_table;
 	for (int i = 0; i < cores; ++i)
 	{
-		resource_table.push_back(make_pair("available", 0));
+		resource_table.push_back(make_pair("available", -1));
 		resource_state_table[to_string(i)] = resource_table;
 		resource_table.clear();
 	}
 	
-	resource_table.push_back(make_pair("available", 0));
+	resource_table.push_back(make_pair("available", -1));
 	resource_state_table["SSD"] = resource_table;
 
 	resource_table.clear();
 
-	resource_table.push_back(make_pair("available", 0));
+	resource_table.push_back(make_pair("available", -1));
 	resource_state_table["INPUT"] = resource_table;
 }
 
@@ -172,32 +172,49 @@ void check_device_state(string event_name, vector<pair<string, string> > &temp)
 	temp.push_back(make_pair(device, state));
 }
 
-void change_device_state(string device, string p_id)
+void change_device_state(string device, string core_id, int p_id)
 {
 	if (device != "CORE")
 	{
 		if (resource_state_table[device].front().first == "available")
 		{
 			resource_state_table[device].front().first = "block";
+			resource_state_table[device].front().second = p_id;
 		}
 		else
 		{
 			resource_state_table[device].front().first = "available";
+			resource_state_table[device].front().second = -1;
 		}
 		
 	}
-	else
-	{
-		if (resource_state_table[p_id].front().first == "available")
+	else //if (core_id == "0" || core_id == "1")
+	{		
+		if (resource_state_table[core_id].front().first == "available")
 		{
-			resource_state_table[p_id].front().first = "block";
+			resource_state_table[core_id].front().first = "block";
+			resource_state_table[core_id].front().second = p_id;
 		}
 		else
 		{
-			resource_state_table[p_id].front().first = "available";
+			resource_state_table[core_id].front().first = "available";
+			resource_state_table[core_id].front().second = -1;
 		}
 
 	}
+	// else
+	// {
+	// 	if (resource_state_table["0"].front().first == "available" && resource_state_table["1"].front().first == "available")
+	// 	{
+	// 		resource_state_table["0"].front().first = "block";
+	// 		resource_state_table["0"].front().second = p_id;
+	// 	}
+	// 	else if (resource_state_table["1"].front().first == "available")
+	// 	{
+	// 		resource_state_table["1"].front().first = "block";
+	// 		resource_state_table["1"].front().second = p_id;
+	// 	}
+	// }
 }
 
 void queue_is_empty(string event_name, vector<pair<string, string> > &next_instruction)
@@ -205,20 +222,20 @@ void queue_is_empty(string event_name, vector<pair<string, string> > &next_instr
 	int p_id;
 	string instruction;
 
-	// if (event_name == "CORE")
-	// {
-	// 	if (ready_queue.empty())
-	// 	{
-	// 		p_id = -1;
-	// 	}
-	// 	else
-	// 	{
-	// 		p_id = ready_queue.front();
-	// 		instruction = "CORE";
-	// 		ready_queue.pop();
-	// 	}
-	// }
-	if (event_name == "SSD")
+	if (event_name == "CORE")
+	{
+		if (ready_queue.empty())
+		{
+			p_id = -1;
+		}
+		else
+		{
+			p_id = ready_queue.front();
+			instruction = "CORE";
+			ready_queue.pop();
+		}
+	}
+	else if (event_name == "SSD")
 	{
 		if (ssd_queue.empty())
 		{
@@ -400,23 +417,25 @@ int main(int argc, char const *argv[])
 	while(event_list.size())
 	{	
 		count ++;
-		if (count == 5)
-		{
-			break;
-		}
+		//cout << "Iteration : " << count << endl;
+		// if (count == 50)
+		// {
+		// 	break;
+		// }
 
-		cout << "sort event list" << endl;
+		//cout << "sort event list" << endl;
 		sort(event_list.begin(), event_list.end(), is_early());
 		// print the event list
-	    for(int i=0;i<event_list.size();++i)
-			cout << event_list[i].p_id << " " 
-				 << event_list[i].event << " " 
-				 << event_list[i].eventime
-				 << endl;
+	  //   for(int i=0;i<event_list.size();++i)
+			// cout << event_list[i].p_id << " " 
+			// 	 << event_list[i].event << " " 
+			// 	 << event_list[i].eventime
+			// 	 << endl;
 
 		current_time = event_list.front().eventime;
 
-		cout << "current time  = " << current_time << endl;
+
+		//cout << "current time  = " << current_time << endl;
 
 
 		// read current event information
@@ -427,8 +446,8 @@ int main(int argc, char const *argv[])
 		event_name = event_list.front().event;
 		
 
-		cout << "next event: ";
-		cout << event_process_id << " " << event_name << " " << current_event_time << endl;
+		//cout << "current event: ";
+		//cout << event_process_id << " " << event_name << " " << current_event_time << endl;
 
 		// if it is a arrival event, read next instruction, push in the queue
 		// if it is a device event, read next instruction, push in the queue
@@ -436,6 +455,7 @@ int main(int argc, char const *argv[])
 		// change device state, update event lsit and process state
 		// if it is not avail, update process state
 		int pro_id;
+		string core_id;
 		int exe_time;
 		// if not more operations, process terminate
 		if (process.find(event_process_id)->second.empty())
@@ -446,37 +466,41 @@ int main(int argc, char const *argv[])
 			cout << "Process " << event_process_id << " terminates at time "
 							   << execution_time << " ms" << endl;
 			cout << "Process " << event_process_id << " is TERMINATED" << endl;
+			// reset 
 
 			// delete process and print other process state
 			process_state_table.erase(process_state_table.find(event_process_id));
 			for(auto & table : process_state_table)
 			{
-				cout << "Process " << table.first << " is"
-								   << table.second.front().second << endl; 
+				cout << "Process " << table.first << " is "
+								   << table.second.front().first << endl; 
 			}
 			// delete current event
-			event_list.erase(event_list.begin(), event_list.begin()+1);
-			continue;
+			//event_list.erase(event_list.begin(), event_list.begin()+1);
+			//continue;
+		}
+		else
+		{
+			// if not empty
+			event_process_id_instruction.clear();
+			event_process_id_instruction = process.find(event_process_id)->second;
+
+			process.find(event_process_id)->second.erase(process.find(event_process_id)->second.begin(), 
+													process.find(event_process_id)->second.begin()+1);
+			// read next instruction
+			instruction = event_process_id_instruction.front().first;
+			execution_time = event_process_id_instruction.front().second;
+			//cout << instruction << " " << execution_time << endl;
+
+			// push in the queue
+			queue_info = push_in_queue(instruction, event_process_id);
+			// update process state, excution time
+			// ready in the ready queue, blocked in the device queue
+			process_state_vector.clear();
+			process_state_vector.push_back(make_pair(queue_info, execution_time));
+			process_state_table[event_process_id] = process_state_vector;
 		}
 
-		// if not empty
-		event_process_id_instruction.clear();
-		event_process_id_instruction = process.find(event_process_id)->second;
-
-		process.find(event_process_id)->second.erase(process.find(event_process_id)->second.begin(), 
-												process.find(event_process_id)->second.begin()+1);
-		// read next instruction
-		instruction = event_process_id_instruction.front().first;
-		execution_time = event_process_id_instruction.front().second;
-		cout << instruction << " " << execution_time << endl;
-
-		// push in the queue
-		queue_info = push_in_queue(instruction, event_process_id);
-		// update process state, excution time
-		// ready in the ready queue, blocked in the device queue
-		process_state_vector.clear();
-		process_state_vector.push_back(make_pair(queue_info, execution_time));
-		process_state_table[event_process_id] = process_state_vector;
 
 		// check event type
 		if (event_name != "Arrival")
@@ -488,12 +512,31 @@ int main(int argc, char const *argv[])
 			// or blocked if process in input/ssd
 			// 
 			//-- CORE completion event for process 1 at time 60 ms
-			cout << "-- " << instruction << " completion event for process"
+			cout << "-- " << event_name << " completion event for process "
 										<< event_process_id << " at time "
 										<< current_event_time << " ms" << endl;
 
-			change_device_state(instruction, to_string(event_process_id));
-			if (instruction == "INPUT")
+			if (event_name == "CORE")
+			{
+				for(auto & res : resource_state_table)
+				{
+					//cout << res.first << " "; 
+					for(auto& r : res.second)
+				 		//cout << r.first << " " << r.second << " " << endl;
+				 		if (event_process_id == r.second)
+				 		{
+				 			core_id = res.first;
+				 			//cout << "1 core id = " << core_id << endl;
+				 		}
+				}
+				
+			}
+			change_device_state(event_name, core_id, event_process_id);
+			
+			// check device state and queue
+			
+			// if device is avail and queue is not empty, pop front process to device
+			if (event_name == "INPUT")
 			{
 				if (!input_queue.empty())
 				{
@@ -501,39 +544,74 @@ int main(int argc, char const *argv[])
 					exe_time = process_state_table[pro_id].front().second;
 					release_time = current_time + exe_time;
 					input_queue.pop();
-					cout << "-- Process " << event_process_id << " will release a " 
-		 		 		 << event_process_id_instruction.front().first << " at time " 
+					cout << "-- Process " << pro_id << " will release a " 
+		 		 		 << event_name << " at time " 
 		 		 		 << release_time << " ms" << endl;
-		 		 	change_device_state(instruction, to_string(pro_id));
+		 		 	change_device_state(event_name, to_string(event_process_id), pro_id);
 					// update process state
 					process_state_vector.clear();
 					process_state_vector.push_back(make_pair("BLOCKED", release_time));
-					process_state_table[event_process_id] = process_state_vector;
+					process_state_table[pro_id] = process_state_vector;
 
 					// update event list
-					event_list.push_back(EventList(event_process_id, instruction, release_time));
+					event_list.push_back(EventList(pro_id, event_name, release_time));
 				}
 			}
-			else if (instruction == "CORE")
+			else if (event_name == "CORE")
 			{
+				if (current_time == 15615)
+				{
+					cout << "15615 ms : " << endl;
+					for(auto & res : resource_state_table)
+					{
+						cout << res.first << " "; 
+						for(auto& r : res.second)
+					 		cout << r.first << " " << r.second << " " << endl;
+					}
+
+					// for(auto & table : process_state_table)
+					// {
+					// 	if (event_process_id == table.first)
+					// 	{
+					// 		continue;
+					// 	}
+					// 	cout << "Process " << table.first << " is " 
+					// 					   << table.second.front().first
+					// 					   << " until "
+					// 					   << table.second.front().second << endl; 
+					// }
+
+				}
+				
 				if (!ready_queue.empty())
 				{
 					pro_id = ready_queue.front();
 					exe_time = process_state_table[pro_id].front().second;
 					release_time = current_time + exe_time;
 					ready_queue.pop();
-					cout << "-- Process " << event_process_id << " will release a " 
-		 		 		 << event_process_id_instruction.front().first << " at time " 
+
+					cout << pro_id << " " << "2 core id = " << core_id << endl;
+
+
+					cout << "-- Process " << pro_id << " will release a " 
+		 		 		 << event_name << " at time " 
 		 		 		 << release_time << " ms" << endl;
-		 		 	change_device_state(instruction, to_string(pro_id));
+		 		 	change_device_state(event_name, core_id, pro_id);
+		 		 	
 					// update process state
 					process_state_vector.clear();
 					process_state_vector.push_back(make_pair("RUNNING", release_time));
-					process_state_table[event_process_id] = process_state_vector;
+					process_state_table[pro_id] = process_state_vector;
 
 					// update event list
-					event_list.push_back(EventList(event_process_id, instruction, release_time));
+					event_list.push_back(EventList(pro_id, event_name, release_time));
 				}
+				else
+				{
+					cout << "ready queue is empty" << endl;
+				}
+
+				//cout << "hwewe" << endl;
 			}
 			else
 			{
@@ -544,18 +622,186 @@ int main(int argc, char const *argv[])
 					exe_time = process_state_table[pro_id].front().second;
 					release_time = current_time + exe_time;
 					ssd_queue.pop();
-					cout << "-- Process " << event_process_id << " will release a " 
-		 		 		 << event_process_id_instruction.front().first << " at time " 
+					cout << "-- Process " << pro_id << " will release a " 
+		 		 		 << event_name << " at time " 
 		 		 		 << release_time << " ms" << endl;
-		 		 	change_device_state(instruction, to_string(pro_id));
+		 		 	change_device_state(event_name, to_string(event_process_id), pro_id);
 					// update process state
 					process_state_vector.clear();
 					process_state_vector.push_back(make_pair("BLOCKED", release_time));
-					process_state_table[event_process_id] = process_state_vector;
+					process_state_table[pro_id] = process_state_vector;
 
 					// update event list
-					event_list.push_back(EventList(event_process_id, instruction, release_time));
+					event_list.push_back(EventList(pro_id, event_name, release_time));
 				}
+				
+			}
+
+
+			check_device_state(instruction, temp);
+			device = temp.front().first;
+			device_state = temp.front().second;
+
+
+			if (instruction == "INPUT")
+			{
+
+				if (!input_queue.empty())
+				{
+					if (device_state == "available")
+					{
+						pro_id = input_queue.front();
+						exe_time = process_state_table[pro_id].front().second;
+						release_time = current_time + exe_time;
+						input_queue.pop();
+						cout << "-- Process " << pro_id << " will release a " 
+			 		 		 << event_process_id_instruction.front().first << " at time " 
+			 		 		 << release_time << " ms" << endl;
+
+			 		 	change_device_state(instruction, to_string(event_process_id), pro_id);
+
+						// update process state
+						process_state_vector.clear();
+						process_state_vector.push_back(make_pair("BLOCKED", release_time));
+						process_state_table[pro_id] = process_state_vector;
+
+						// update event list
+						event_list.push_back(EventList(pro_id, instruction, release_time));
+					}
+					else
+					{
+						cout << "-- Process " << event_process_id << " requests a "
+									  << instruction << " at time "
+									  << current_time << " for " 
+									  << execution_time << " ms" << endl;
+
+						cout << "-- Process " << event_process_id << " must wait for user" <<  endl;
+						// -- Ready queue now contains 1 process(es) waiting for a core
+						cout << "-- Input queue now contains " << input_queue.size() 
+															   << " process(es) waiting for the user" << endl;
+						process_state_vector.clear();
+						process_state_vector.push_back(make_pair("BLOCKED", execution_time));
+						process_state_table[event_process_id] = process_state_vector;
+					}
+				}
+			}
+			else if (instruction == "CORE")
+			{
+				for(auto & res : resource_state_table)
+				{
+					//cout << res.first << " "; 
+					for(auto& r : res.second)
+					{
+				 		//cout << r.first << " " << r.second << " " << endl;
+				 		if (r.first == "available")
+				 		{
+				 			core_id = res.first;
+				 			//cout << "1 core id = " << core_id << endl;
+				 		}
+				 	}
+				}
+
+				if (!ready_queue.empty())
+				{
+					if (device_state == "available")
+					{
+						pro_id = ready_queue.front();
+						exe_time = process_state_table[pro_id].front().second;
+						release_time = current_time + exe_time;
+						ready_queue.pop();
+						cout << "-- Process " << pro_id << " will release a " 
+			 		 		 << event_process_id_instruction.front().first << " at time " 
+			 		 		 << release_time << " ms" << endl;
+
+
+
+			 		 	
+
+			 		 	change_device_state(instruction, core_id, pro_id);
+			 		 	
+
+						// update process state
+						process_state_vector.clear();
+						process_state_vector.push_back(make_pair("RUNNING", release_time));
+						process_state_table[pro_id] = process_state_vector;
+
+						// update event list
+						event_list.push_back(EventList(pro_id, instruction, release_time));
+					}
+					else
+					{
+						if (current_time == 15110)
+						{
+							cout << "device = " << device << " device_state = " << device_state << endl;
+							for(auto & res : resource_state_table)
+							{
+								cout << res.first << " "; 
+								for(auto& r : res.second)
+							 		cout << r.first << " " << r.second << " " << endl;
+							}
+
+						}
+
+
+						cout << "-- Process " << event_process_id << " requests a "
+									  << instruction << " at time "
+									  << current_time << " for " 
+									  << execution_time << " ms" << endl;
+
+						cout << "-- Process " << event_process_id << " must wait for a " 
+									  << instruction << endl;
+						// -- Ready queue now contains 1 process(es) waiting for a core
+						cout << "-- Ready queue now contains " << ready_queue.size() 
+															   << " process(es) waiting for a "
+															   << instruction << endl;
+						process_state_vector.clear();
+						process_state_vector.push_back(make_pair("READY", execution_time));
+						process_state_table[event_process_id] = process_state_vector;
+					}
+				}
+
+				
+			}
+			else
+			{
+				// instruction == SSD
+				if (!ssd_queue.empty())
+				{
+					if (device_state == "available")
+					{					
+						pro_id = ssd_queue.front();
+						exe_time = process_state_table[pro_id].front().second;
+						release_time = current_time + exe_time;
+						ssd_queue.pop();
+						cout << "-- Process " << pro_id << " will release a " 
+			 		 		 << event_process_id_instruction.front().first << " at time " 
+			 		 		 << release_time << " ms" << endl;
+			 		 	change_device_state(instruction, to_string(event_process_id), pro_id);
+						// update process state
+						process_state_vector.clear();
+						process_state_vector.push_back(make_pair("BLOCKED", release_time));
+						process_state_table[pro_id] = process_state_vector;
+
+						// update event list
+						event_list.push_back(EventList(pro_id, instruction, release_time));
+					}
+					else
+					{
+						cout << "-- Process " << event_process_id << " requests a "
+									  << instruction << " at time "
+									  << current_time << " for " 
+									  << execution_time << " ms" << endl;
+
+						cout << "-- Process " << event_process_id << " must wait for ssd" <<  endl;
+						// -- Ready queue now contains 1 process(es) waiting for a core
+						cout << "-- SSD queue now contains " << ssd_queue.size() 
+															   << " process(es) waiting for the ssd" << endl;
+						process_state_vector.clear();
+						process_state_vector.push_back(make_pair("BLOCKED", execution_time));
+						process_state_table[event_process_id] = process_state_vector;
+					}
+				}
+
 			}
 
 
@@ -645,15 +891,15 @@ int main(int argc, char const *argv[])
 				{
 					// arrival process already push in the ready queue
 					// pop front process to core
-					int pro_id = ready_queue.front();
-					int exe_time = process_state_table[pro_id].front().second;
+					pro_id = ready_queue.front();
+					exe_time = process_state_table[pro_id].front().second;
 					release_time = current_time + exe_time;
 					ready_queue.pop();
 					cout << "-- Process " << event_process_id << " will release a " 
 			 		 		 << event_process_id_instruction.front().first << " at time " 
 			 		 		 << release_time << " ms" << endl;
 					// change core state
-					change_device_state("CORE", to_string(pro_id));
+					change_device_state("CORE", to_string(event_process_id), pro_id);
 					// update process state
 					process_state_vector.clear();
 					process_state_vector.push_back(make_pair("RUNNING", release_time));
@@ -683,6 +929,18 @@ int main(int argc, char const *argv[])
 				process_state_vector.clear();
 				process_state_vector.push_back(make_pair("READY", execution_time));
 				process_state_table[event_process_id] = process_state_vector;
+			}
+
+			for(auto & table : process_state_table)
+			{
+				if (event_process_id == table.first)
+				{
+					continue;
+				}
+				cout << "Process " << table.first << " is " 
+								   << table.second.front().first
+								   << " until "
+								   << table.second.front().second << endl; 
 			}
 
 		}
@@ -834,13 +1092,28 @@ int main(int argc, char const *argv[])
 			// }
 			
 		event_list.erase(event_list.begin(), event_list.begin()+1);
-		cout << "---------------------------" << endl;
-		cout << "---------------------------" << endl;
+		// for(auto & res : resource_state_table)
+		// {
+		// 	cout << res.first << " "; 
+		// 	for(auto& r : res.second)
+		//  		cout << r.first << " " << r.second << " " << endl;
+		// }
+
+
+		// for(auto & table : process_state_table)
+		// {
+		// 	cout << "Process " << table.first << " is " 
+		// 					   << table.second.front().first
+		// 					   << " until "
+		// 					   << table.second.front().second << endl; 
+		// }
+		// cout << "---------------------------" << endl;
+		// cout << "---------------------------" << endl;
 		//break;
 	}
 
 
-
+	cout << "Iteration : " << count << endl;
 
 	return 0;
 }
