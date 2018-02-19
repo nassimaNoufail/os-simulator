@@ -1,6 +1,7 @@
 // c++ 11 standard
 
 
+
 #include <iostream>
 #include <vector>
 #include <map>
@@ -118,6 +119,7 @@ void split_process_and_save(map< int, vector<pair<string, int> > > &process, vec
 }
 
 //void initial_resource_table(map<string, vector<pair<string, int> > > &resource_state_table, const int cores)
+// initial resource table
 void initial_resource_table(const int cores)
 {
 	vector<pair<string, int> > resource_table;
@@ -137,6 +139,7 @@ void initial_resource_table(const int cores)
 	resource_state_table["INPUT"] = resource_table;
 }
 
+// check device state
 void check_device_state(string event_name, vector<pair<string, string> > &temp)
 {
 	string state;
@@ -155,8 +158,6 @@ void check_device_state(string event_name, vector<pair<string, string> > &temp)
 		for (auto & it : resource_state_table)
 		{
 			count ++;
-			//cout << it.first << " "; 
-			//cout << it.second.front().first << " " << it.second.front().second << endl;
 			if (it.second.front().first == "available")
 			{
 	 			device = it.first;
@@ -181,6 +182,7 @@ void check_device_state(string event_name, vector<pair<string, string> > &temp)
 	temp.push_back(make_pair(device, state));
 }
 
+// change device state
 void change_device_state(string device, string core_id, int p_id)
 {
 	if (device != "CORE")
@@ -197,7 +199,7 @@ void change_device_state(string device, string core_id, int p_id)
 		}
 		
 	}
-	else //if (core_id == "0" || core_id == "1")
+	else 
 	{		
 		if (resource_state_table[core_id].front().first == "available")
 		{
@@ -213,53 +215,8 @@ void change_device_state(string device, string core_id, int p_id)
 	}
 }
 
-void queue_is_empty(string event_name, vector<pair<string, string> > &next_instruction)
-{
-	int p_id;
-	string instruction;
 
-	if (event_name == "CORE")
-	{
-		if (ready_queue.empty())
-		{
-			p_id = -1;
-		}
-		else
-		{
-			p_id = ready_queue.front();
-			instruction = "CORE";
-			ready_queue.pop();
-		}
-	}
-	else if (event_name == "SSD")
-	{
-		if (ssd_queue.empty())
-		{
-			p_id = -1;
-		}
-		else
-		{
-			p_id = ssd_queue.front();
-			instruction = "SSD";
-			ssd_queue.pop();
-		}
-	}
-	else
-	{
-		if (input_queue.empty())
-		{
-			p_id = -1;
-		}
-		else
-		{
-			p_id = input_queue.front();
-			instruction = "INPUT";
-			input_queue.pop();
-		}
-	}
-
-	//next_instruction.push_back(make_pair(instruction, p_id));
-}
+// push every instruction to the correspond queue first before doing other operation
 
 string push_in_queue(string event_name, int p_id)
 {
@@ -318,12 +275,12 @@ int main(int argc, char const *argv[])
 	// initial resource table
 	initial_resource_table(cores);
 	
-	for(auto & res : resource_state_table)
-	{
-		cout << res.first << " "; 
-		for(auto& r : res.second)
-	 		cout << r.first << " " << r.second << " " << endl;
-	}
+	// for(auto & res : resource_state_table)
+	// {
+	// 	cout << res.first << " "; 
+	// 	for(auto& r : res.second)
+	//  		cout << r.first << " " << r.second << " " << endl;
+	// }
 
 	
 	int current_time;
@@ -352,9 +309,9 @@ int main(int argc, char const *argv[])
 	int release_time;
 
 	int count = 0;
-	cout << "*************************" << endl;
-	cout << "*******    start ********" << endl;
-	cout << "*************************" << endl;
+	// cout << "*************************" << endl;
+	// cout << "********  start *********" << endl;
+	// cout << "*************************" << endl;
 
 
 	while(event_list.size())
@@ -401,6 +358,7 @@ int main(int argc, char const *argv[])
 			// process terminate
 			// print terminate time
 			execution_time = process_state_table[event_process_id].front().second;
+			cout << endl;
 			cout << "Process " << event_process_id << " terminates at time "
 							   << execution_time << " ms" << endl;
 			cout << "Process " << event_process_id << " is TERMINATED" << endl;
@@ -409,7 +367,6 @@ int main(int argc, char const *argv[])
 			// delete process and print other process state
 			process_state_table.erase(process_state_table.find(event_process_id));
 
-			cout << endl;
 
 			for(auto & table : process_state_table)
 			{
@@ -745,7 +702,7 @@ int main(int argc, char const *argv[])
 				process_state_table[event_process_id] = process_state_vector;
 			}
 
-			cout << endl;
+			
 			for(auto & table : process_state_table)
 			{
 				if (event_process_id == table.first)
