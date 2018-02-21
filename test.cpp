@@ -1,5 +1,10 @@
 // c++ 11 standard
-
+/*
+compile: g++ filename.cpp -o filename.out -std=c++11
+run: ./filename.out < inputfile.txt > output.txt
+input: inputfile.txt
+output: output.txt
+*/
 
 
 #include <iostream>
@@ -31,7 +36,7 @@ struct EventList
     string event;
     // eventime include arrival and completion time
     // arrival time when new process arrive 
-    // or completion time when running process will release the core
+    // or completion time when running process release the core
     int eventime;
 
     EventList(const int& p_id, const string& event, const int& eventime): p_id(p_id),event(event),eventime(eventime)
@@ -83,9 +88,9 @@ void split_process_and_save(map< int, vector<pair<string, int> > > &process, vec
 		else if (ele.first == "NEW")
 		{
 			NUM_PROCESS++;
+			// every even time meet a new process
 			if(flag % 2 == 0)
 			{
-				//cout << "I'm here" << endl;
 				if(flag != 0)
 				{
 					process[pNum] = operation;
@@ -95,6 +100,7 @@ void split_process_and_save(map< int, vector<pair<string, int> > > &process, vec
 
 				event_list.push_back(EventList(flag, "Arrival", stoi(ele.second)));
 			}
+			// odd time
 			else
 			{
 				process[pNum] = operation;
@@ -111,14 +117,12 @@ void split_process_and_save(map< int, vector<pair<string, int> > > &process, vec
 			operation.push_back(make_pair(ele.first, stoi(ele.second)));
 		}
 
-    	//cout << it->first << " " << it->second << endl;
 	}
 	process[pNum] = operation;
 	operation.clear();
 
 }
 
-//void initial_resource_table(map<string, vector<pair<string, int> > > &resource_state_table, const int cores)
 // initial resource table
 void initial_resource_table(const int cores)
 {
@@ -217,7 +221,6 @@ void change_device_state(string device, string core_id, int p_id)
 
 
 // push every instruction to the correspond queue first before doing other operation
-
 string push_in_queue(string event_name, int p_id)
 {
 	string queue_info;
@@ -296,8 +299,9 @@ int main(int argc, char const *argv[])
 	string queue_info;
 	int is_empty;
 	
+	// read process id & instruction from event
 	vector<pair<string, int> > event_process_id_instruction;
-	vector<pair<string, int> > next_queue_instruction;
+
 	vector <pair<string, string> > temp;
 	
 	map<int, vector <pair<string, int> > > process_state_table;
@@ -308,29 +312,13 @@ int main(int argc, char const *argv[])
 	
 	int release_time;
 
-	int count = 0;
-	// cout << "*************************" << endl;
-	// cout << "********  start *********" << endl;
-	// cout << "*************************" << endl;
-
-
+	// start from read first event in the event list until the list is empty
 	while(event_list.size())
 	{	
-		count ++;
-		
+		// sort event first before read the frist event
 		sort(event_list.begin(), event_list.end(), is_early());
-		// print the event list
-	  //   for(int i=0;i<event_list.size();++i)
-			// cout << event_list[i].p_id << " " 
-			// 	 << event_list[i].event << " " 
-			// 	 << event_list[i].eventime
-			// 	 << endl;
 
 		current_time = event_list.front().eventime;
-
-
-		//cout << "current time  = " << current_time << endl;
-
 
 		// read current event information
 		// event will be either a process arrival event, or a process completion event
@@ -351,7 +339,7 @@ int main(int argc, char const *argv[])
 		int pro_id;
 		string core_id;
 		int exe_time;
-		// if not more operations, process terminate
+		// if no more operations, process terminate
 		if (process.find(event_process_id)->second.empty())
 		{
 				
@@ -362,7 +350,6 @@ int main(int argc, char const *argv[])
 			cout << "Process " << event_process_id << " terminates at time "
 							   << execution_time << " ms" << endl;
 			cout << "Process " << event_process_id << " is TERMINATED" << endl;
-			// reset 
 
 			// delete process and print other process state
 			process_state_table.erase(process_state_table.find(event_process_id));
@@ -377,7 +364,7 @@ int main(int argc, char const *argv[])
 		}
 		else
 		{
-			// if not empty
+			// if not empty, find correspond instruction
 			event_process_id_instruction.clear();
 			event_process_id_instruction = process.find(event_process_id)->second;
 
@@ -415,18 +402,16 @@ int main(int argc, char const *argv[])
 			if (event_name == "CORE")
 			{
 				for(auto & res : resource_state_table)
-				{
-					//cout << res.first << " "; 
+				{ 
 					for(auto& r : res.second)
-				 		//cout << r.first << " " << r.second << " " << endl;
 				 		if (event_process_id == r.second)
 				 		{
 				 			core_id = res.first;
-				 			//cout << "1 core id = " << core_id << endl;
 				 		}
 				}
-				
 			}
+
+			// change the device state after device completion
 			change_device_state(event_name, core_id, event_process_id);
 			
 			// check device state and queue
@@ -512,6 +497,8 @@ int main(int argc, char const *argv[])
 			device_state = temp.front().second;
 
 
+
+			// after process the queue, process next instruction
 			if (instruction == "INPUT")
 			{
 
@@ -690,10 +677,10 @@ int main(int argc, char const *argv[])
 			{
 				// if device is not avail
 				// update process state to ready
-				// -- Process 2 must wait for a core
+				
 				// cout << "-- Process " << event_process_id << " must wait for a " 
 				// 					  << instruction << endl;
-				// // -- Ready queue now contains 1 process(es) waiting for a core
+				
 				// cout << "-- Ready queue now contains " << ready_queue.size() 
 				// 									   << " process(es) waiting for a "
 				// 									   << instruction << endl;
@@ -747,8 +734,6 @@ int main(int argc, char const *argv[])
 	cout << "Total elapsed time: " << current_time << " ms" << endl;
 	cout << "Core utilization: " << 100 * (float)CORE_REQ/(float)current_time << " percent" << endl;
 	cout << "SSD utilization: " << 100 * (float)SSDtimes/(float)current_time << " percent" << endl;
-
-	//cout << "Iteration : " << count << endl;
 
 	return 0;
 }
