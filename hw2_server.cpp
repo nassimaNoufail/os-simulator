@@ -123,29 +123,22 @@ int main(int argc, char const *argv[])
 
 		string early_pay;
 		string mid_pay;
-		vector <pair<int, int> > salary;
+		vector <pair<string, string> > salary;
 		//stringstream ss;
 		string major = buffer;
 		major = major.substr(0, major.size() - 1);
-		if (major == " ")
-		{
-			/* code */
-		}
-		//ss << buffer;
-		//ss >> major;
 		cout << "major is-" << major << "-" << endl;
 		//map<char, int>::iterator it;
 		//it = read_from_file.find(buffer);
 		if (read_from_file.find(major) == read_from_file.end())
 		{
-			n = write(newsockfd,"That major is not in the table",255);
-			if (n < 0) 
-
-				cerr << "ERROR writing to socket" << endl;
-			cout << "That major is not in the table" << endl;
-			n = write(newsockfd,"-1 ",18);
+			n = write(newsockfd,"-1",255);
 			if (n < 0) 
 				cerr << "ERROR writing to socket" << endl;
+			
+			// n = write(newsockfd,"-1 ",18);
+			// if (n < 0) 
+			// 	cerr << "ERROR writing to socket" << endl;
 
 			continue;
 		}
@@ -153,8 +146,15 @@ int main(int argc, char const *argv[])
 		salary = read_from_file[major];
 		early_pay = salary.front().first;
 		mid_pay = salary.front().second;
+		memset(buffer, 256, sizeof(buffer));
+		string c = early_pay + " " + mid_pay;
+		int arrayLength = c.length();
+		for (int i = 0; i < arrayLength; i++)
+		{
+			buffer[i] = c[i];
+		}
 		
-		n = write(newsockfd,"I got your message",18);
+		n = write(newsockfd,buffer,255);
 		if (n < 0) 
 			cerr << "ERROR writing to socket" << endl;
 	}
