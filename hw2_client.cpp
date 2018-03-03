@@ -38,10 +38,6 @@ int main(int argc, char *argv[])
     string argument;
 
     char buffer[256];
-    // if (argc < 3) {
-    //    cerr << "usage "<< argv[0] <<" hostname port" << endl;
-    //    exit(0);
-    // }
     
     cout << "Enter server host name: ";
     cin.getline(buffer, 256);
@@ -56,14 +52,13 @@ int main(int argc, char *argv[])
     cin.getline(buffer, 256);
     portno = atoi(buffer);
 
-    //cout << server << " " << portno << endl;
     while(true)
     {
+        // create socket
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd < 0) 
             cerr << "ERROR opening socket" << endl;
         
-        //bzero((char *) &serv_addr, sizeof(serv_addr));
         memset((char *) &serv_addr, 0, sizeof(serv_addr));
         serv_addr.sin_family = AF_INET;
         bcopy((char *)server->h_addr, 
@@ -77,33 +72,23 @@ int main(int argc, char *argv[])
         memset(buffer, 256, sizeof(buffer));
         cout << "Enter a college major: ";
         cin.getline(buffer, 255);
-        //fgets(buffer,255,stdin);
-        // string temp;
-        // cin >> temp;
-        //cout << "temp is -" << buffer << "-" << endl;
 
-        
-        // int arrayLength = temp.length();
-        // for (int i = 0; i < arrayLength; i++)
-        // {
-        //     buffer[i] = temp[i];
-        // }
-
-        //
-        //cout << "input = " << buffer << endl;
         string major = buffer;
         major = major.substr(0, major.size() - 1);
+        // if the user enters an empty string, then exit
         if (major == "")
         {
             break;
         }
+
+        // else send the data to server
         n = write(sockfd,buffer,strlen(buffer));
         if (n < 0) 
              cerr << "ERROR writing to socket" << endl;
-        // else
-        //     cout << "n = " << n << endl;
-        //bzero(buffer,256);
+    
         memset(buffer, 256, sizeof(buffer));
+
+        // receive the reply from the server
         n = read(sockfd,buffer,255);
         string early_pay;
         string mid_pay;
@@ -113,13 +98,13 @@ int main(int argc, char *argv[])
         {
             istringstream iss(buffer);
             iss >> early_pay;
-            //cout << "early_pay = " << early_pay << endl;
+            // if the reply is -1, means the major not in the table
             if (early_pay == "-1")
             {
                 cout << "That major is not in the table" << endl << endl;
             }
             else
-            {
+            {   // print the information get from the server
                 iss >> mid_pay;
                 cout << "The average early career pay for a " << major
                      << " major is " << early_pay << endl;
