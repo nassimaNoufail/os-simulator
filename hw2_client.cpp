@@ -1,3 +1,17 @@
+/*
+Description: A client program that will connect with your server and
+send it requests for the average early career and midcareer
+pays for a specific college major, say “Hospitality management.”
+compile: g++ filename.cpp -o filename.out -std=c++11
+run: ./filename.out
+2 inputs: 
+host name
+port number
+
+output: 
+stdout
+*/
+
 #include <iostream>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -21,23 +35,34 @@ int main(int argc, char *argv[])
 
     struct sockaddr_in serv_addr;
     struct hostent *server;
+    string argument;
 
     char buffer[256];
-    if (argc < 3) {
-       cerr << "usage "<< argv[0] <<" hostname port" << endl;
-       exit(0);
+    // if (argc < 3) {
+    //    cerr << "usage "<< argv[0] <<" hostname port" << endl;
+    //    exit(0);
+    // }
+    
+    cout << "Enter server host name: ";
+    cin.getline(buffer, 256);
+    server = gethostbyname(buffer);
+    if (server == NULL) {
+        cerr << "ERROR, no such host\n";
+        exit(0);
     }
-    portno = atoi(argv[2]);
+
+    memset(buffer, 256, sizeof(buffer));
+    cout << "Enter server port number: ";
+    cin.getline(buffer, 256);
+    portno = atoi(buffer);
+
+    //cout << server << " " << portno << endl;
     while(true)
     {
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd < 0) 
             cerr << "ERROR opening socket" << endl;
-        server = gethostbyname(argv[1]);
-        if (server == NULL) {
-            cerr << "ERROR, no such host\n";
-            exit(0);
-        }
+        
         //bzero((char *) &serv_addr, sizeof(serv_addr));
         memset((char *) &serv_addr, 0, sizeof(serv_addr));
         serv_addr.sin_family = AF_INET;
@@ -49,11 +74,23 @@ int main(int argc, char *argv[])
         if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) 
             cerr << "ERROR connecting" << endl;
         
-        cout << "Enter a college major: ";
-        //bzero(buffer,256);
         memset(buffer, 256, sizeof(buffer));
-        fgets(buffer,255,stdin);
-        cout << "input = " << buffer << endl;
+        cout << "Enter a college major: ";
+        cin.getline(buffer, 255);
+        //fgets(buffer,255,stdin);
+        // string temp;
+        // cin >> temp;
+        //cout << "temp is -" << buffer << "-" << endl;
+
+        
+        // int arrayLength = temp.length();
+        // for (int i = 0; i < arrayLength; i++)
+        // {
+        //     buffer[i] = temp[i];
+        // }
+
+        //
+        //cout << "input = " << buffer << endl;
         string major = buffer;
         major = major.substr(0, major.size() - 1);
         if (major == "")
@@ -63,8 +100,8 @@ int main(int argc, char *argv[])
         n = write(sockfd,buffer,strlen(buffer));
         if (n < 0) 
              cerr << "ERROR writing to socket" << endl;
-        else
-            cout << "n = " << n << endl;
+        // else
+        //     cout << "n = " << n << endl;
         //bzero(buffer,256);
         memset(buffer, 256, sizeof(buffer));
         n = read(sockfd,buffer,255);
@@ -76,10 +113,10 @@ int main(int argc, char *argv[])
         {
             istringstream iss(buffer);
             iss >> early_pay;
-            cout << "early_pay = " << early_pay << endl;
+            //cout << "early_pay = " << early_pay << endl;
             if (early_pay == "-1")
             {
-                cout << "That major is not in the table" << endl;
+                cout << "That major is not in the table" << endl << endl;
             }
             else
             {
@@ -87,6 +124,7 @@ int main(int argc, char *argv[])
                 cout << "The average early career pay for a " << major
                      << " major is " << early_pay << endl;
                 cout << "The corresponding mid-career pay is " << mid_pay << endl;
+                cout << endl;
             }
         }
     }

@@ -1,3 +1,16 @@
+/*
+Description: A server program that will wait for connection requests
+from your client and average early career and mid-career
+pay for the requested college major.
+compile: g++ filename.cpp -o filename.out -std=c++11
+run: ./filename.out
+2 inputs: 
+inputfile.txt
+port number
+
+output: 
+stdout
+*/
 #include <iostream>
 #include <stack>
 #include <fstream>
@@ -57,7 +70,7 @@ int readfromfile(char const *argc)
 	if(!file) 
 	{
     	cout << "Cannot open input file.\n";
-    	return 1;
+    	return 0;
   	}
 
   	string str;
@@ -74,19 +87,30 @@ int readfromfile(char const *argc)
 int main(int argc, char const *argv[])
 {
 	
-	readfromfile(argv[1]);
+	
 
 	int sockfd, newsockfd, portno;
 	socklen_t clilen;
 	char buffer[256];
 	struct sockaddr_in serv_addr, cli_addr;
 	int n;
+	int flag;
 
-	if (argc < 3) 
+	// if (argc < 3) 
+	// {
+	// 	cerr << "ERROR, no port provided\n" << endl;
+	// 	exit(1);
+	// }
+	cout << "Enter file name: ";
+	cin.getline(buffer, 256);
+	flag = readfromfile(buffer);
+	if (flag == 0)
 	{
-		cerr << "ERROR, no port provided\n" << endl;
-		exit(1);
+		return 0;
 	}
+	memset(buffer, 256, sizeof(buffer));
+	cout << "Enter server port number: ";
+	cin.getline(buffer, 256);
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0) 
@@ -94,13 +118,16 @@ int main(int argc, char const *argv[])
     //bzero((char *) &serv_addr, sizeof(serv_addr));
     memset((char *) &serv_addr, 0, sizeof(serv_addr));
 
-	portno = atoi(argv[2]);
+	portno = atoi(buffer);
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(portno);
 	if (bind(sockfd, (struct sockaddr *) &serv_addr,
 	      sizeof(serv_addr)) < 0) 
+	{
 		cerr << "ERROR on binding" << endl;
+		return 0;
+	}
 	
 	listen(sockfd,5);
 	clilen = sizeof(cli_addr);
@@ -109,8 +136,8 @@ int main(int argc, char const *argv[])
 		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t*) &clilen);
 		if (newsockfd < 0) 
 			cerr << "ERROR on accept" << endl;
-		else
-			cout <<"newsockfd = " << newsockfd << endl;
+		// else
+		// 	cout <<"newsockfd = " << newsockfd << endl;
 		  
 		//bzero(buffer,256);
 		memset(buffer, 256, sizeof(buffer));
@@ -118,15 +145,15 @@ int main(int argc, char const *argv[])
 		n = read(newsockfd,buffer,255);
 		if (n < 0) 
 			cerr << "ERROR reading from socket" << endl;
-		else
-			cout <<"n = " << n << " buffer = " << buffer << endl;
+		// else
+		// 	cout <<"n = " << n << " buffer = " << buffer << endl;
 
 		string early_pay;
 		string mid_pay;
 		vector <pair<string, string> > salary;
 		//stringstream ss;
 		string major = buffer;
-		major = major.substr(0, major.size() - 1);
+		//major = major.substr(0, major.size() - 1);
 		cout << "major is-" << major << "-" << endl;
 		//map<char, int>::iterator it;
 		//it = read_from_file.find(buffer);
@@ -135,7 +162,7 @@ int main(int argc, char const *argv[])
 			n = write(newsockfd,"-1",255);
 			if (n < 0) 
 				cerr << "ERROR writing to socket" << endl;
-			
+
 			// n = write(newsockfd,"-1 ",18);
 			// if (n < 0) 
 			// 	cerr << "ERROR writing to socket" << endl;
