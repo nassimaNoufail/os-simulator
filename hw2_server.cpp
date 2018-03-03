@@ -15,7 +15,7 @@
 
 using namespace std;
 
-map< string, vector<pair<int, int> > > read_from_file;
+map< string, vector<pair<string, string> > > read_from_file;
 
 void savefromfile(istringstream &iss)
 {
@@ -23,16 +23,16 @@ void savefromfile(istringstream &iss)
 	string word;
 	string temp;
 	string major;
-	int mid_pay;
-	int early_pay;
+	string mid_pay;
+	string early_pay;
 	while(iss >> word)
 	{
 		readofline.push(word);
 	}
 
-	mid_pay = stoi(readofline.top());
+	mid_pay = readofline.top();
 	readofline.pop();
-	early_pay = stoi(readofline.top());
+	early_pay = readofline.top();
 	readofline.pop();
 	while(!readofline.empty())
 	{
@@ -45,7 +45,7 @@ void savefromfile(istringstream &iss)
 			major = " " + major;
 		}
 	}
-	vector <pair<int, int> > salary;
+	vector <pair<string, string> > salary;
 	salary.push_back(make_pair(early_pay, mid_pay));
 	read_from_file[major] = salary;	
 }
@@ -104,52 +104,61 @@ int main(int argc, char const *argv[])
 	
 	listen(sockfd,5);
 	clilen = sizeof(cli_addr);
-	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t*) &clilen);
-	if (newsockfd < 0) 
-		cerr << "ERROR on accept" << endl;
-	else
-		cout <<"newsockfd = " << newsockfd << endl;
-	  
-	//bzero(buffer,256);
-	memset(buffer, 256, sizeof(buffer));
-
-	n = read(newsockfd,buffer,255);
-	if (n < 0) 
-		cerr << "ERROR reading from socket" << endl;
-	else
-		cout <<"n = " << n << " buffer = " << buffer << endl;
-
-	int early_pay;
-	int mid_pay;
-	vector <pair<int, int> > salary;
-	//stringstream ss;
-	string major = buffer;
-	major = major.substr(0, major.size() - 1);
-	//ss << buffer;
-	//ss >> major;
-	cout << "major is-" << major << "-" << endl;
-	//map<char, int>::iterator it;
-	//it = read_from_file.find(buffer);
-	if (read_from_file.find(major) == read_from_file.end())
+	while(true)
 	{
-		cout << "That major is not in the table" << endl;
-		return 0;
+		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, (socklen_t*) &clilen);
+		if (newsockfd < 0) 
+			cerr << "ERROR on accept" << endl;
+		else
+			cout <<"newsockfd = " << newsockfd << endl;
+		  
+		//bzero(buffer,256);
+		memset(buffer, 256, sizeof(buffer));
+
+		n = read(newsockfd,buffer,255);
+		if (n < 0) 
+			cerr << "ERROR reading from socket" << endl;
+		else
+			cout <<"n = " << n << " buffer = " << buffer << endl;
+
+		string early_pay;
+		string mid_pay;
+		vector <pair<int, int> > salary;
+		//stringstream ss;
+		string major = buffer;
+		major = major.substr(0, major.size() - 1);
+		if (major == " ")
+		{
+			/* code */
+		}
+		//ss << buffer;
+		//ss >> major;
+		cout << "major is-" << major << "-" << endl;
+		//map<char, int>::iterator it;
+		//it = read_from_file.find(buffer);
+		if (read_from_file.find(major) == read_from_file.end())
+		{
+			n = write(newsockfd,"That major is not in the table",255);
+			if (n < 0) 
+
+				cerr << "ERROR writing to socket" << endl;
+			cout << "That major is not in the table" << endl;
+			n = write(newsockfd,"-1 ",18);
+			if (n < 0) 
+				cerr << "ERROR writing to socket" << endl;
+
+			continue;
+		}
+		
+		salary = read_from_file[major];
+		early_pay = salary.front().first;
+		mid_pay = salary.front().second;
+		
+		n = write(newsockfd,"I got your message",18);
+		if (n < 0) 
+			cerr << "ERROR writing to socket" << endl;
 	}
-	
-	salary = read_from_file[major];
-	early_pay = salary.front().first;
-	mid_pay = salary.front().second;
 
-	cout << "Enter a college major: " << major << endl;
-
-
-	cout << "The average early career pay for a " << major
-		 << " major is " << early_pay << endl;
-	cout << "The corresponding mid-career pay is " << mid_pay << endl;
-	
-	n = write(newsockfd,"I got your message",18);
-	if (n < 0) 
-		cerr << "ERROR writing to socket" << endl;
 	return 0; 
 	// cout << "file information: " << endl;
 	// for (auto & element : read_from_file)

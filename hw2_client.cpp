@@ -60,6 +60,12 @@ int main(int argc, char *argv[])
     n = read(sockfd,buffer,255);
     if (n < 0) 
          cerr << "ERROR reading from socket" << endl;
+    else
+    {
+        cout << "The average early career pay for a " << major
+             << " major is " << early_pay << endl;
+        cout << "The corresponding mid-career pay is " << mid_pay << endl;
+    }
     cout << buffer << endl;
     return 0;
 }
