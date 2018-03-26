@@ -109,6 +109,7 @@ int main(int argc, char const *argv[])
 	// if user input wrong file name, exit
 	if (flag == 0)
 	{
+		cout << "Wrong file" << endl;
 		return 0;
 	}
 	memset(buffer, 256, sizeof(buffer));
