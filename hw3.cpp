@@ -16,7 +16,6 @@ static int statusOfTunnel = 0;
 static int whittierBound = 0;
 static int bigbear = 0;
 
-
 queue<int> queue_1;
 queue<int> queue_2;
 
@@ -29,6 +28,7 @@ struct struct_vehicle {
 
 void *car(void *arg)
 {
+
 	// car is arrival
 	pthread_mutex_t mutex;
 	pthread_mutex_init(&mutex, NULL);
@@ -117,6 +117,15 @@ void *tunnelstate(void *arg)
 			count = 0;
 		}
 		
+		// count ++;
+		// pthread_mutex_lock(&mutex);
+		// statusOfTunnel = count % 3;
+		// pthread_mutex_unlock(&mutex);
+		// sleep(5);
+		// if (count == 3)
+		// {
+		// 	count = 0;
+		// }
 		// if something happen
 		// break the for loop, then exit the thread
 	}
@@ -179,6 +188,43 @@ int main(int argc, char *argv[]) {
 		asset(rc == 0);
 	}
 	// {
+		
+	// 	if (vehicleList[i].bound_for == "WB")
+	// 		queue_1.push(vehicleList[i].id);
+	// 	else
+	// 		queue_2.push(vehicleList[i].id);
+
+	// 	sleep(vehicleList[i].arrival_time);
+
+	// 	if (statusOfTunnel == 1)
+	// 	{
+	// 		if (maximumNoCars < 10)
+	// 		{
+	// 			if (!queue_1.empty())
+	// 			{
+	// 				carid = queue_1.front();
+	// 				queue_1.pop();
+					
+	// 				rc = pthread_create(&carid, NULL, car, (void *) &vehicleList[carid]);
+	// 				asset(rc == 0);
+	// 			}
+	// 		}
+	// 	}
+	// 	else if (statusOfTunnel == 3)
+	// 	{
+	// 		if (maximumNoCars <= 10)
+	// 		{
+	// 			if (!queue_1.empty())
+	// 			{
+	// 				carid = queue_2.front();
+	// 				queue_2.pop();
+					
+	// 				rc = pthread_create(&carid, NULL, car, (void *) &vehicleList[carid]);
+	// 				asset(rc == 0);
+	// 			}
+	// 		}
+	// 	}
+	// }
 		
 	// 	if (vehicleList[i].bound_for == "WB")
 	// 		queue_1.push(vehicleList[i].id);
