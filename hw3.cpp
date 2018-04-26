@@ -1,3 +1,7 @@
+// ReadMe
+// Compile: g++ hw3.cpp -o 3.out -fpermissive -pthread
+// Input: ./3.out < input3a.txt
+
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,14 +14,17 @@
 
 using namespace std;
 
-static pthread_mutex_t mutex;
-static int maximumNoCars = 0;
-static int statusOfTunnel = 0;
-static int whittierBound = 0;
-static int bigbear = 0;
-
-queue<int> queue_1;
-queue<int> queue_2;
+static pthread_mutex_t traffic_lock;
+static pthread_mutex_t mylock;
+static pthread_cond_t clear = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t wb_can = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t bb_can = PTHREAD_COND_INITIALIZER;
+static string traffic;
+static int maxNoCarsInTunnel = 0;
+static int currNoCarsInTunnel = 0;
+static int NoCarsWB = 0;
+static int NoCarsBB = 0;
+static int NoCarsWait = 0;
 
 struct struct_vehicle {
 	int id;
@@ -85,11 +92,64 @@ struct struct_vehicle {
 
 void *tunnelstate(void *arg)
 {
-	int count;
-	count = *(int *) arg;
-	pthread_mutex_t mutex;
-	pthread_mutex_init(&mutex, NULL);
+	int done;
+	done = (int) arg;
+	int rc;
+	rc = pthread_mutex_init(&traffic_lock, NULL);
+	cout << "pthread_mutex_init() rc = " << rc << endl;
+	while(done == 0)
+	{
+		cout << "done = " << done << endl;
+		rc = pthread_mutex_lock(&traffic_lock);
+		cout << "pthread_mutex_lock() rc = " << rc << endl;
 
+	    traffic = "WB";
+		printf("The tunnel is now open to Whittier-bound traffic.\n");
+	    rc = pthread_cond_broadcast(&wb_can);
+	    cout << "pthread_cond_broadcast() rc = " << rc << endl;
+
+	    rc = pthread_mutex_unlock(&traffic_lock);
+	    cout << "pthread_mutex_unlock() rc = " << rc << endl;
+
+	    sleep(5);
+	    cout << "after sleep 5s" << endl;
+
+	    cout << "traffic = " << traffic << endl;
+
+	    rc = pthread_mutex_lock(&traffic_lock);
+	    cout << "pthread_mutex_lock() rc = " << rc << endl;
+
+	    traffic = "N";
+	    printf("The tunnel is now closed to ALL traffic.\n");
+	    rc = pthread_mutex_unlock(&traffic_lock);
+	    cout << "pthread_mutex_unlock() rc = " << rc << endl;
+
+	    sleep(5);
+	    cout << "traffic = " << traffic << endl;
+	    rc = pthread_mutex_lock(&traffic_lock);
+	    cout << "pthread_mutex_lock() rc = " << rc << endl;
+
+	    traffic = "BB";
+		printf("The tunnel is now open to Valley-bound traffic.\n");
+	    rc = pthread_cond_broadcast(&bb_can);
+	    cout << "pthread_cond_broadcast() rc = " << rc << endl;
+
+	    rc = pthread_mutex_unlock(&traffic_lock);
+	    cout << "pthread_mutex_unlock() rc = " << rc << endl;
+
+	    sleep(5);
+	    cout << "traffic = " << traffic << endl;
+	    rc = pthread_mutex_lock(&traffic_lock);
+	    cout << "pthread_mutex_lock() rc = " << rc << endl;
+
+	    traffic = "N";
+	    printf("The tunnel is now closed to ALL traffic.\n");
+	    rc = pthread_mutex_unlock(&traffic_lock);
+	    cout << "pthread_mutex_unlock() rc = " << rc << endl;
+
+	    sleep(5);
+	    cout << "traffic = " << traffic << endl;
+	}
 	// for (::)
 	// {
 	// 	// 4 status for tunnel
@@ -139,18 +199,18 @@ int main(int argc, char *argv[]) {
 	pthread_t tid[100];	// ID
 	pthread_t tunnel;
 	int count = 0;
+	int totalNCars;
 	
-	int rc;
 	// bridgeMaxLoad = atoi(argv[1]) ;
 	// cout << "Maximum bridge load is " << bridgeMaxLoad << " tons." << endl;
 	// string plate;
 	// int weight, arrival_delay, processTime;
 
-	int maximum_no_cars;
+	int tunnelCapacity;
 	int arrival_time, access_time;
 	string bound_for;
 
-	cin >> maximum_no_cars;
+	cin >> tunnelCapacity;
 
 	while (!cin.eof()) {
 		cin >> arrival_time;
@@ -163,7 +223,7 @@ int main(int argc, char *argv[]) {
 		count++;
 	}
 
-	cout << maximum_no_cars << endl;
+	cout << tunnelCapacity << endl;
 
 	for (int i = 0; i < count; i++) {
 		cout << vehicleList[i].id << " ";
@@ -173,12 +233,14 @@ int main(int argc, char *argv[]) {
 		cout << endl;
 	}
 
-	maximumNoCars = maximum_no_cars;
-
+	maxNoCarsInTunnel = tunnelCapacity;
+	totalNCars = count;
 	// create tunnel pthread, update the tunnel state
 	// every 5s, 1: WB, 2: deadtime, 3: BB
-	pthread_create(&tunnel, NULL, tunnelstate, (void*) 0);
-	// asset(rc == 0);
+	cout << "create tunnel thread" << endl;
+	int rc;
+	rc = pthread_create(&tunnel, NULL, tunnelstate, (void*) 0);
+	cout << "pthread_create() rc = " << rc << endl;
 
 	// create car pthread
 	// int carid;
