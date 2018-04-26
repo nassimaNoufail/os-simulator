@@ -14,11 +14,12 @@
 
 using namespace std;
 
-static pthread_mutex_t traffic_lock;
-static pthread_mutex_t mylock;
+static pthread_mutex_t traffic_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mylock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t clear = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t wb_can = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t bb_can = PTHREAD_COND_INITIALIZER;
+static int done = 0;
 static string traffic;
 static int maxNoCarsInTunnel = 0;
 static int currNoCarsInTunnel = 0;
@@ -36,40 +37,70 @@ struct struct_vehicle {
 void *carsToWB(void *arg)
 {
 	struct_vehicle *vehicle = (struct_vehicle*) arg;
+	pthread_mutex_lock(&traffic_lock);
 	cout << "Car #" << vehicle->id << " going to Whittier arrives at the tunnel." << endl;
-	pthread_mutex_init(&mylock, NULL);
-	if (traffic == 'WB')
-	{
-		// maxNoCarsInTunnel < 3
-		if (currNoCarsInTunnel < maximumNoCars)
-		{
-			cout << "Car #" << vehicle->id << " going to Whittier arrives at the tunnel." << endl;
-			pthread_mutex_lock(&mylock);
-			currNoCarsInTunnel ++;
-			pthread_mutex_unlock(&mylock);
 
-			pthread_mutex_lock(&mylock);
-			maxNoCarsInTunnel --;
-			pthread_mutex_unlock(&mylock);
-		}
-		
-	}
-	else
+	
+	while (traffic != "WB" || currNoCarsInTunnel == maxNoCarsInTunnel)
 	{
-		// traffic == BB or traffic == N
-		// car has to wait
+		if (traffic == "WB" && currNoCarsInTunnel == maxNoCarsInTunnel)
+		{
+			NoCarsWait ++;
+		}
+		pthread_cond_wait(&wb_can, &traffic_lock);
 	}
+	pthread_mutex_unlock(&traffic_lock);
+	pthread_mutex_lock(&mylock);
+	cout << "Car #" << vehicle->id << " going to Whittier enter the tunnel." << endl;
+	NoCarsWB ++;
+	currNoCarsInTunnel ++;
+	pthread_mutex_unlock(&mylock);
+	sleep(vehicle->access_time);
+
+	pthread_mutex_lock(&mylock);
+	currNoCarsInTunnel --;
+	// Car # 1 going to Whittier exits the tunnel.
+	cout << "Car #" << vehicle->id << " going to Whittier exits the tunnel." << endl;
+
+	if (currNoCarsInTunnel == maxNoCarsInTunnel - 1)
+	{
+		pthread_cond_signal(&wb_can);
+	}
+	pthread_mutex_unlock(&mylock);
+		
 }
 
 void *carsToBB(void *arg)
 {
 	struct_vehicle *vehicle = (struct_vehicle*) arg;
+	pthread_mutex_lock(&traffic_lock);
 	cout << "Car #" << vehicle->id << " going to Bear Valley arrives at the tunnel." << endl;
-	pthread_mutex_init(&mylock, NULL);
-	// if (traffic != 'BB')
-	// {
-	// 	/* code */
-	// }
+	while (traffic != "BB" || currNoCarsInTunnel == maxNoCarsInTunnel)
+	{
+		if (traffic == "BB" && currNoCarsInTunnel == maxNoCarsInTunnel)
+		{
+			NoCarsWait ++;
+		}
+		pthread_cond_wait(&bb_can, &traffic_lock);	
+	}
+	pthread_mutex_unlock(&traffic_lock);
+
+	pthread_mutex_lock(&mylock);
+	cout << "Car #" << vehicle->id << " going to Bear Valley enter the tunnel." << endl;
+	NoCarsBB ++;
+	currNoCarsInTunnel ++;
+	pthread_mutex_unlock(&mylock);
+
+	sleep(vehicle->access_time);
+
+	pthread_mutex_lock(&mylock);
+	currNoCarsInTunnel --;
+	cout << "Car #" << vehicle->id << " going to Bear Valley exits the tunnel." << endl;
+	if (currNoCarsInTunnel == maxNoCarsInTunnel - 1)
+	{
+		pthread_cond_signal(&bb_can);
+	}
+	pthread_mutex_unlock(&mylock);
 }
 // void *carsToWB(void *arg)
 // {
@@ -130,28 +161,33 @@ void *carsToBB(void *arg)
 
 void *tunnelstate(void *arg)
 {
-	int done;
-	done = (int) arg;
-	cout << "done = " << done << endl;
-	pthread_mutex_init(&traffic_lock, NULL);
-	// cout << "pthread_mutex_init() rc = " << rc << endl;
-	while(done == 0)
-	{
-		
-		pthread_mutex_lock(&traffic_lock);
+	// int done;
+	// done = *(int*) arg;
+	// cout << "done = " << done << endl;
+	// pthread_mutex_init(&traffic_lock, NULL);
+
 	
+	while(1)
+	{
+		if (done == 1)
+			break;
+		pthread_mutex_lock(&traffic_lock);
 	    traffic = "WB";
 		printf("The tunnel is now open to Whittier-bound traffic.\n");
 	    pthread_cond_broadcast(&wb_can);
 	    pthread_mutex_unlock(&traffic_lock);
 	    sleep(5);
 
+	    if (done == 1)
+			break;
 	    pthread_mutex_lock(&traffic_lock);
 	    traffic = "N";
 	    printf("The tunnel is now closed to ALL traffic.\n");
 	    pthread_mutex_unlock(&traffic_lock);
 	    sleep(5);
 
+	    if (done == 1)
+			break;
 	    pthread_mutex_lock(&traffic_lock);
 	    traffic = "BB";
 		printf("The tunnel is now open to Valley-bound traffic.\n");
@@ -159,13 +195,14 @@ void *tunnelstate(void *arg)
 	    pthread_mutex_unlock(&traffic_lock);
 	    sleep(5);
 
+	    if (done == 1)
+			break;
 	    pthread_mutex_lock(&traffic_lock);
 	    traffic = "N";
 	    printf("The tunnel is now closed to ALL traffic.\n");
 	    pthread_mutex_unlock(&traffic_lock);
 	    sleep(5);
 
-	    pthread_exit(0);
 	}
 	// for (::)
 	// {
@@ -218,11 +255,6 @@ int main(int argc, char *argv[]) {
 	int count = 0;
 	int totalNCars;
 	
-	// bridgeMaxLoad = atoi(argv[1]) ;
-	// cout << "Maximum bridge load is " << bridgeMaxLoad << " tons." << endl;
-	// string plate;
-	// int weight, arrival_delay, processTime;
-
 	int tunnelCapacity;
 	int arrival_time, access_time;
 	string bound_for;
@@ -240,6 +272,8 @@ int main(int argc, char *argv[]) {
 		vehicleList[count].bound_for = bound_for;
 		vehicleList[count].access_time = access_time;
 	}
+	// cout << "count = " << count << endl;
+	// exit(0);
 	cout <<"Maximum number of cars in the tunnel: " << tunnelCapacity << endl;
 
 	for (int i = 1; i <= count; i++) {
@@ -254,6 +288,7 @@ int main(int argc, char *argv[]) {
 	totalNCars = count;
 	// create tunnel pthread, update the tunnel state
 	cout << "create tunnel thread" << endl;
+
 	pthread_create(&tunnel, NULL, tunnelstate, (void*) 0);
 	
 	for (int i = 1; i <= totalNCars; i++)
@@ -275,7 +310,15 @@ int main(int argc, char *argv[]) {
 	{
 		pthread_join(tid[i], NULL);
 	}
-	cout << "Total number of vehicles: " << totalNCars << endl;
+	done = 1;
+	pthread_join(tunnel, NULL);
+	// 2 car(s) going to Whittier arrived at the tunnel.
+	// 1 car(s) going to Bear Valley arrived at the tunnel.
+	// 0 car(s) had to wait because the tunnel was full.
+	cout << endl << endl;
+	cout << NoCarsWB << " cars(s) going to Whittier arrived at the tunnel." << endl;
+	cout << NoCarsBB << " cars(s) going to Bear Valley arrived at the tunnel." << endl;
+	cout << NoCarsWait << " cars(s) had to wait because the tunnel was full." << endl;
 	pthread_exit(0);
 	return 0;
 }
