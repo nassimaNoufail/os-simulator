@@ -162,7 +162,7 @@ int main(int argc, char const *argv[])
 		
 		string major = buffer;
 		
-		cout << "major is-" << major << "-" << endl;
+		cout << "major is *" << major << "*" << endl;
 		
 		// if received data not in the map, return -1 to client
 		// then continue wait for next request
